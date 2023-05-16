@@ -1,0 +1,26 @@
+ARG MYSQLDATABASE
+ARG MYSQLHOST
+ARG MYSQLPASSWORD
+ARG MYSQLPORT
+ARG MYSQLUSER
+
+FROM mcr.microsoft.com/dotnet/aspnet:6.0 AS base
+WORKDIR /app
+EXPOSE 80
+EXPOSE 443
+
+FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
+WORKDIR /Teste-3
+COPY ["Teste-3.csproj", "."]
+RUN dotnet restore "./Teste-3.csproj"
+COPY . .
+WORKDIR "/Teste-3/."
+RUN dotnet build "Teste-3.csproj" -c Release -o /app/build
+
+FROM build AS publish
+RUN dotnet publish "Teste-3.csproj" -c Release -o /app/publish
+
+FROM base AS final
+WORKDIR /app
+COPY --from=publish /app/publish .
+CMD ASPNETCORE_URLS=http://*:$PORT dotnet Teste-3.dll
